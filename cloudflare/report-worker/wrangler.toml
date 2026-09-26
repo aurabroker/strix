@@ -1,0 +1,25 @@
+name = "strix-report-launcher"
+main = "src/index.js"
+compatibility_date = "2026-09-01"
+workers_dev = true
+account_id = "1f52c869d091ebf55a2d1789dad4842d"
+
+# Client-safe: the Supabase anon/publishable key is meant to ship in
+# frontend code. Real access control happens server-side in the Worker,
+# which calls Supabase's /auth/v1/user endpoint to validate the caller's
+# access token before serving the report or triggering a scan.
+[vars]
+SUPABASE_URL = "https://kukvgsjrmrqtzhkszzum.supabase.co"
+SUPABASE_ANON_KEY = "sb_publishable_MIr6swJYHmBbAQU8joomhA_cTsbkCuG"
+GITHUB_REPO = "aurabroker/strix"
+GITHUB_WORKFLOW_FILE = "report-site.yml"
+GITHUB_REF = "main"
+
+# Secret (set with `wrangler secret put GITHUB_TOKEN`): a GitHub PAT scoped
+# to this repo only, with "Actions: write" and "Contents: read" permissions,
+# used to trigger the report-site workflow_dispatch.
+#   GITHUB_TOKEN
+
+[[r2_buckets]]
+binding = "REPORTS"
+bucket_name = "strix-report-site"
