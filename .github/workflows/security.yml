@@ -1,0 +1,45 @@
+name: Security Scan
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+  security-events: write
+
+jobs:
+  strix-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4.4.0
+        with:
+          persist-credentials: false
+          fetch-depth: 0  # required for diff-scope resolution
+
+      - name: Install Strix
+        run: curl -sSL https://strix.ai/install | bash
+
+      - name: Run Security Scan
+        env:
+          STRIX_LLM: ${{ secrets.STRIX_LLM }}
+          LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
+        run: strix -n -t ./ --scan-mode quick --diff-base "origin/${{ github.base_ref }}" --max-budget 10
+
+      # Don't fail open: a run that hits the hard budget stop exits 0 but leaves
+      # run.json status "stopped", not "completed". Enforce completion explicitly.
+      # This does not catch an agent that wrapped up early on a budget *warning*
+      # (it still calls finish_scan and records "completed"), so size the budget.
+      - name: Fail unless the scan completed
+        run: |
+          run_json=$(ls -t strix_runs/*/run.json | head -1)
+          status=$(jq -r .status "$run_json")
+          if [ "$status" != "completed" ]; then
+            echo "Strix run status is '$status' — the scan did not complete (likely budget exhausted). Raise --max-budget." >&2
+            exit 1
+          fi
+
+      - name: Upload SARIF
+        if: always()
+        uses: github/codeql-action/upload-sarif@eaec7bdd3f18a9ef62b9f0d85d410932cf58c886  # v3.38.2
+        with:
+          sarif_file: strix_runs
