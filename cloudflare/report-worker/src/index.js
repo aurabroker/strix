@@ -120,9 +120,10 @@ function renderShell(env) {
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Strix Report Launcher</title>
 <meta name="robots" content="noindex, nofollow">
+<link rel="icon" href="data:,">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <style>
-  :root { --bg:#0b0f14; --panel:#121821; --border:#232c38; --text:#e6edf3; --muted:#8b98a5; --accent:#22c55e; }
+  :root { --bg:#ffffff; --panel:#f6f8fa; --border:#d9dee3; --text:#1a1f24; --muted:#5b6570; --accent:#16a34a; }
   * { box-sizing: border-box; }
   body { margin:0; padding:0 16px 64px; background:var(--bg); color:var(--text);
     font:16px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; }
@@ -131,9 +132,9 @@ function renderShell(env) {
   header h1 { margin:0 0 8px; font-size:1.5rem; }
   .panel { background:var(--panel); border:1px solid var(--border); border-radius:10px; padding:24px; margin-bottom:24px; }
   input, button { font:inherit; }
-  input { width:100%; padding:10px 12px; margin:6px 0 14px; background:#0d1218; border:1px solid var(--border);
+  input { width:100%; padding:10px 12px; margin:6px 0 14px; background:#ffffff; border:1px solid var(--border);
     border-radius:6px; color:var(--text); }
-  button { padding:10px 18px; background:var(--accent); color:#0b0f14; font-weight:600; border:none;
+  button { padding:10px 18px; background:var(--accent); color:#ffffff; font-weight:600; border:none;
     border-radius:6px; cursor:pointer; }
   button:disabled { opacity:0.5; cursor:not-allowed; }
   #status { margin-top:10px; font-size:0.9rem; color:var(--muted); white-space:pre-wrap; }
@@ -173,7 +174,7 @@ function renderShell(env) {
 </main>
 
 <script>
-  const supabase = window.supabase.createClient(
+  const supabaseClient = window.supabase.createClient(
     "${env.SUPABASE_URL}",
     "${env.SUPABASE_ANON_KEY}"
   );
@@ -184,7 +185,7 @@ function renderShell(env) {
   const status = document.getElementById("status");
 
   async function authHeaders() {
-    const { data } = await supabase.auth.getSession();
+    const { data } = await supabaseClient.auth.getSession();
     const token = data.session?.access_token;
     return token ? { Authorization: "Bearer " + token } : {};
   }
@@ -197,7 +198,7 @@ function renderShell(env) {
   }
 
   async function refreshView() {
-    const { data } = await supabase.auth.getSession();
+    const { data } = await supabaseClient.auth.getSession();
     if (data.session) {
       loginSection.style.display = "none";
       appSection.style.display = "block";
@@ -210,7 +211,7 @@ function renderShell(env) {
 
   document.getElementById("signin").addEventListener("click", async () => {
     loginStatus.textContent = "Signing in…";
-    const { error } = await supabase.auth.signInWithPassword({
+    const { error } = await supabaseClient.auth.signInWithPassword({
       email: document.getElementById("email").value,
       password: document.getElementById("password").value,
     });
@@ -219,7 +220,7 @@ function renderShell(env) {
   });
 
   document.getElementById("signout").addEventListener("click", async () => {
-    await supabase.auth.signOut();
+    await supabaseClient.auth.signOut();
     refreshView();
   });
 
