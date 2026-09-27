@@ -35,7 +35,18 @@ jobs:
           STRIX_LLM: ${{ secrets.STRIX_LLM }}
           LLM_API_KEY: ${{ secrets.LLM_API_KEY }}
           TARGET: ${{ github.event.inputs.target || './' }}
-        run: strix -n -t "$TARGET" --scan-mode standard --max-budget 25
+        # Exit code 2 means "vulnerabilities found" -- that's the expected,
+        # successful outcome for a report we want published, not a failure.
+        # Only exit code 1 (fatal/setup error) should fail this step.
+        run: |
+          set +e
+          strix -n -t "$TARGET" --scan-mode standard --max-budget 25
+          code=$?
+          set -e
+          if [ "$code" != "0" ] && [ "$code" != "2" ]; then
+            echo "Strix exited with code $code (fatal error, not just findings)." >&2
+            exit "$code"
+          fi
 
       - name: Fail unless the scan completed
         run: |
